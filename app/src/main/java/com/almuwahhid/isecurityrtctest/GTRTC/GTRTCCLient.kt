@@ -14,7 +14,7 @@ import org.webrtc.*
 import java.util.*
 
 class GTRTCCLient(val ctx: Context, peerParam: GTPeerConnectionParameters, mEGLcontext: EGLContext, rtcListener: RTCListener) {
-    private val TAG = ".WebRTCCLient"
+    private val TAG = ".iSecurityRTCClient"
 
     private val pcConstraints = MediaConstraints()
     private var localMS: MediaStream? = null

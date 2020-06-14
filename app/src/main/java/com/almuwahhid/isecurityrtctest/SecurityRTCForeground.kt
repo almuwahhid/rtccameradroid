@@ -100,11 +100,11 @@ class SecurityRTCForeground : Service(), GTRTCCLient.RTCListener {
     }
 
     override fun onStatusChanged(newStatus: String) {
-        TODO("Not yet implemented")
+
     }
 
     override fun onLocalStream(localStream: MediaStream) {
-        TODO("Not yet implemented")
+
     }
 
     override fun onAddRemoteStream(remoteStream: MediaStream) {

@@ -13,7 +13,7 @@ import org.json.JSONObject
 import org.webrtc.*
 import java.util.*
 
-class GTRTCCLient(val ctx: Context, peerParam: GTPeerConnectionParameters, mEGLcontext: EGLContext, rtcListener: RTCListener) {
+class GTRTCCLient(val ctx: Context, peerParam: GTPeerConnectionParameters, rtcListener: RTCListener) {
     private val TAG = ".iSecurityRTCClient"
 
     private val pcConstraints = MediaConstraints()
@@ -55,7 +55,7 @@ class GTRTCCLient(val ctx: Context, peerParam: GTPeerConnectionParameters, mEGLc
         this.rtccLient = rtcListener
         this.params = peerParam
         PeerConnectionFactory.initializeAndroidGlobals(rtcListener, true, true,
-                params!!.videoCodecHwAcceleration, mEGLcontext)
+                params!!.videoCodecHwAcceleration, false)
         factory = PeerConnectionFactory()
         gson = Gson()
 

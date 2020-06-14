@@ -29,9 +29,29 @@ class SecurityRTCForeground : Service(), GTRTCCLient.RTCListener {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+        manager = getSystemService(NotificationManager::class.java)
+        val notificationIntent = Intent(this, MainActivity::class.java)
+        val pendingIntent = PendingIntent.getActivity(this,
+            0, notificationIntent, 0)
 
-            val input = intent!!.getStringExtra("foreground." + "BuildConfig.APPLICATION_ID_123321")
+        val notification = NotificationCompat.Builder(this, "CHANNEL_ID")
+            .setContentTitle("iSecurityRTC")
+            .setContentText("input")
+            .setSmallIcon(R.drawable.ic_launcher_background)
+            .setContentIntent(pendingIntent)
+            .build()
+
+        startForeground(1201029, notification)
+
+        init()
+        if(rtcClient!=null){
+            rtcClient!!.initPeer()
+        }
+
+        return START_NOT_STICKY
+        /*if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+
+//            val input = intent!!.getStringExtra("foreground." + "BuildConfig.APPLICATION_ID_123321")
             manager = getSystemService(NotificationManager::class.java)
             val notificationIntent = Intent(this, MainActivity::class.java)
             val pendingIntent = PendingIntent.getActivity(this,
@@ -39,7 +59,7 @@ class SecurityRTCForeground : Service(), GTRTCCLient.RTCListener {
 
             val notification = NotificationCompat.Builder(this, "CHANNEL_ID")
                 .setContentTitle("iSecurityRTC")
-                .setContentText(input)
+                .setContentText("input")
                 .setSmallIcon(R.drawable.ic_launcher_background)
                 .setContentIntent(pendingIntent)
                 .build()
@@ -54,14 +74,15 @@ class SecurityRTCForeground : Service(), GTRTCCLient.RTCListener {
             return START_NOT_STICKY
         } else {
             return START_STICKY
-        }
+        }*/
     }
 
     private fun init(){
         val displaySize = Point()
         val params = GTPeerConnectionParameters(
             true, false, displaySize.x, displaySize.y, 30, 1, VIDEO_CODEC_VP9, true, 1, AUDIO_CODEC_OPUS, true)
-        rtcClient = GTRTCCLient(this, params!!, VideoRendererGui.getEGLContext(), this)
+        rtcClient = GTRTCCLient(this, params!!, this)
+//        rtcClient = GTRTCCLient(this, params!!, VideoRendererGui.getEGLContext(), this)
 
 
     }

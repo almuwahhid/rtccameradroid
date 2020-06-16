@@ -1,6 +1,7 @@
 package chat.rocket.android.call.GTRTC
 
 import android.content.Context
+import android.content.Intent
 import android.opengl.EGLContext
 import android.util.Log
 
@@ -151,6 +152,8 @@ class GTRTCCLient(val ctx: Context, peerParam: GTPeerConnectionParameters, rtcLi
             peer!!.pc!!.addStream(localMS)
         }
 
+//    iceCandidateCommand.execute(JSONObject().put("id", "").put("label", "ok").put("candidate", "gson!!.fromJson(model.payload, GTCallModel.Payload::class.java).sdp"))
+
         /*if(gson!!.fromJson(model.payload, GTCallModel.Payload::class.java).type == 2){
             remoteSDPCommand.execute(JSONObject().put("sdp", gson!!.fromJson(model.payload, GTCallModel.Payload::class.java).sdp).put("type", model.type))
         } else {
@@ -215,6 +218,7 @@ class GTRTCCLient(val ctx: Context, peerParam: GTPeerConnectionParameters, rtcLi
                 payload.put("type", sdp.type.canonicalForm())
                 payload.put("sdp", sdp.description)
                 Log.d(TAG, "oncreateSccess "+sdp.type.canonicalForm()+" "+sdp.description)
+                context!!.sendBroadcast(Intent("iSecurity").putExtra("data", "oncreateSccess "+sdp.type.canonicalForm()+" "+sdp.description))
                 rtccLient!!.onCallReady(sdp.type.canonicalForm(), sdp.description)
                 pc!!.setLocalDescription(this@Peer, sdp)
             } catch (e: JSONException) {

@@ -1,6 +1,8 @@
 package com.almuwahhid.isecurityrtctest
 
-data class Payload(var uuid: String,
-                   var type: String,
-                   var sdp: String) {
+data class Payload(var sdp: Sdp) {
+    data class Sdp(var uuid: String,
+                       var type: String,
+                       var sdp: String) {
+    }
 }

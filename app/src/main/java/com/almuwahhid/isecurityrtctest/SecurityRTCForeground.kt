@@ -55,8 +55,21 @@ class SecurityRTCForeground : Service(), GTRTCCLient.RTCListener {
             Log.d("TAGSecurityRTCFore", "emitGetListUser() received listen to room called " + args[0].toString())
 //            Log.d("TAGSecurityRTCFore", "received message called " + args[0].toString())
             try {
-                val payload: Payload = gson!!.fromJson(args[0].toString(), Payload::class.java)
-                rtcClient!!.answersdp(payload)
+
+                if(args[0].toString().contains("\"candidate\"")){
+                    Log.d("TAGSecurityRTCFore", "candidate")
+                    val candidate: Candidate = gson!!.fromJson(args[0].toString(), Candidate::class.java)
+                    rtcClient!!.answerCandidate(candidate)
+                } else if(args[0].toString().contains("\"answer\"")){
+                    Log.d("TAGSecurityRTCFore", "truee")
+                    val payload: Payload = gson!!.fromJson(args[0].toString(), Payload::class.java)
+                    rtcClient!!.answerAnswer(payload)
+                } else if(args[0].toString().contains("\"offer\"")){
+                    Log.d("TAGSecurityRTCFore", "false")
+                    val payload: Payload = gson!!.fromJson(args[0].toString(), Payload::class.java)
+                    rtcClient!!.answerOffer(payload)
+                }
+
             } catch (e: JSONException) {
                 e.printStackTrace()
             }
@@ -126,7 +139,7 @@ class SecurityRTCForeground : Service(), GTRTCCLient.RTCListener {
     }
 
     override fun onCallReady(type: String, sdp: String) {
-        mSocket!!.emit("callrtc", gson!!.toJson(Payload("123456", type!!, sdp!!)),
+        mSocket!!.emit("callrtc", gson!!.toJson(Payload(Payload.Sdp("cccf2335-66bf-11e2-ffed-e7f9e438c5b8\"", type!!, sdp!!))),
             object : Ack{
                 override fun call(vararg args: Any?) {
                     Log.d("TAGSecurityRTCFore", "call: getDatas " + args.size)
@@ -138,11 +151,11 @@ class SecurityRTCForeground : Service(), GTRTCCLient.RTCListener {
         Log.d("iSecurity", sdp+" "+type )
     }
 
-    override fun onCandidateCall(label: Int, id: String, candidate: String) {
-        Log.d("iSecurity id", ""+label)
-        Log.d("iSecurity label", id)
+    override fun onCandidateCall(midIndex: Int, mid: String, candidate: String) {
+        Log.d("iSecurity id", ""+midIndex)
+        Log.d("iSecurity label", mid)
         Log.d("iSecurity candidate", candidate)
-        mSocket!!.emit("callrtc", gson!!.toJson(Payload("123456", "", candidate!!)),
+        mSocket!!.emit("callrtc", gson!!.toJson(Candidate(Candidate.Detail(candidate, ""+mid, ""+midIndex), "cccf2335-66bf-11e2-ffed-e7f9e438c5b8\"")),
             object : Ack{
                 override fun call(vararg args: Any?) {
                     Log.d("TAGSecurityRTCFore", "call: getDatas " + args.size)

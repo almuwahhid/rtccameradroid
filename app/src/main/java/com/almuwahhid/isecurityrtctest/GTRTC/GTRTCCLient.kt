@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.opengl.EGLContext
 import android.util.Log
+import com.almuwahhid.isecurityrtctest.Candidate
 
 
 import com.almuwahhid.isecurityrtctest.GTRTC.GTPeerConnectionParameters
@@ -64,8 +65,16 @@ class GTRTCCLient(val ctx: Context, peerParam: GTPeerConnectionParameters, rtcLi
         initRTC()
     }
 
-    public fun answersdp(payload : Payload){
-        remoteSDPCommand.execute(JSONObject().put("sdp", payload.sdp).put("type", payload.type))
+    public fun answerCandidate(candidate: Candidate){
+        iceCandidateCommand.execute(JSONObject().put("candidate", candidate.ice.candidate).put("label", candidate.ice.sdpMLineIndex).put("id", candidate.ice.sdpMid))
+    }
+
+    public fun answerOffer(payload : Payload){
+        remoteSDPCommand.execute(JSONObject().put("sdp", payload.sdp.sdp).put("type", payload.sdp.type))
+    }
+
+    public fun answerAnswer(payload : Payload){
+        answerCommand.execute(JSONObject().put("sdp", payload.sdp.sdp).put("type", payload.sdp.type))
     }
 
 
@@ -111,7 +120,7 @@ class GTRTCCLient(val ctx: Context, peerParam: GTPeerConnectionParameters, rtcLi
             )
             peer!!.pc!!.setRemoteDescription(peer, sdp)
             peer!!.pc!!.createAnswer(peer, pcConstraints)
-            rtccLient!!.onStatusChanged("Menghubungkan")
+//            rtccLient!!.onStatusChanged("Menghubungkan")
         }
     }
 
@@ -146,7 +155,7 @@ class GTRTCCLient(val ctx: Context, peerParam: GTPeerConnectionParameters, rtcLi
     public fun initPeer(){
         setCamera()
         peer = Peer()
-        offerCommand.execute(JSONObject())
+//        offerCommand.execute(JSONObject())
     }
 
 //    public fun initStream(model: GTCallModel){
@@ -195,7 +204,7 @@ class GTRTCCLient(val ctx: Context, peerParam: GTPeerConnectionParameters, rtcLi
         }
 
         val audioSource = factory!!.createAudioSource(MediaConstraints())
-        localMS!!.addTrack(factory!!.createAudioTrack("ARDAMSa0", audioSource))
+//        localMS!!.addTrack(factory!!.createAudioTrack("ARDAMSa0", audioSource))
 
         rtccLient!!.onLocalStream(localMS!!)
     }

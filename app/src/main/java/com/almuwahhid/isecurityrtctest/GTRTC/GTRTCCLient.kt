@@ -7,6 +7,7 @@ import android.util.Log
 
 
 import com.almuwahhid.isecurityrtctest.GTRTC.GTPeerConnectionParameters
+import com.almuwahhid.isecurityrtctest.Payload
 import com.google.gson.Gson
 
 import org.json.JSONException
@@ -61,6 +62,10 @@ class GTRTCCLient(val ctx: Context, peerParam: GTPeerConnectionParameters, rtcLi
         gson = Gson()
 
         initRTC()
+    }
+
+    public fun answersdp(payload : Payload){
+        remoteSDPCommand.execute(JSONObject().put("sdp", payload.sdp).put("type", payload.type))
     }
 
 
@@ -220,6 +225,7 @@ class GTRTCCLient(val ctx: Context, peerParam: GTPeerConnectionParameters, rtcLi
                 Log.d(TAG, "oncreateSccess "+sdp.type.canonicalForm()+" "+sdp.description)
                 context!!.sendBroadcast(Intent("iSecurity").putExtra("data", "oncreateSccess "+sdp.type.canonicalForm()+" "+sdp.description))
                 rtccLient!!.onCallReady(sdp.type.canonicalForm(), sdp.description)
+
                 pc!!.setLocalDescription(this@Peer, sdp)
             } catch (e: JSONException) {
                 e.printStackTrace()

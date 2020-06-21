@@ -1,26 +1,33 @@
 package chat.rocket.android.call.GTRTC
 
+
 import android.content.Context
 import android.content.Intent
-import android.opengl.EGLContext
+import android.hardware.camera2.CameraDevice
+import android.media.MediaRecorder
+import android.os.Build
 import android.util.Log
+import android.view.SurfaceHolder
+import android.view.SurfaceView
+import android.view.WindowManager
+import androidx.annotation.RequiresApi
 import com.almuwahhid.isecurityrtctest.Candidate
-
-
 import com.almuwahhid.isecurityrtctest.GTRTC.GTPeerConnectionParameters
 import com.almuwahhid.isecurityrtctest.Payload
 import com.google.gson.Gson
-
 import org.json.JSONException
 import org.json.JSONObject
 import org.webrtc.*
 import java.util.*
 
-class GTRTCCLient(val ctx: Context, peerParam: GTPeerConnectionParameters, rtcListener: RTCListener) {
+
+class GTRTCCLient(val ctx: Context, peerParam: GTPeerConnectionParameters, rtcListener: RTCListener) :
+    SurfaceHolder.Callback {
     private val TAG = ".iSecurityRTCClient"
 
     private val pcConstraints = MediaConstraints()
     private var localMS: MediaStream? = null
+    private var remoteMS: MediaStream? = null
     private var factory: PeerConnectionFactory? = null
     private val iceServers = LinkedList<PeerConnection.IceServer>()
     private var videoSource: VideoSource? = null
@@ -32,6 +39,7 @@ class GTRTCCLient(val ctx: Context, peerParam: GTPeerConnectionParameters, rtcLi
     private var rtccLient: RTCListener? = null
     private var params: GTPeerConnectionParameters? = null
     private var peer : Peer? = null
+    private var videoCapturer : VideoCapturer? = null
 
     private var offerCommand = CreateOfferCommand()
     private var answerCommand = CreateAnswerCommand()
@@ -39,12 +47,19 @@ class GTRTCCLient(val ctx: Context, peerParam: GTPeerConnectionParameters, rtcLi
     private var iceCandidateCommand = AddIceCandidateCommand()
     internal var gson: Gson? = null
 
+    private var surfaceView: SurfaceView? = null
+    private var mCamera: CameraDevice? = null
+    private var windowManager: WindowManager? = null
+    var mediaRecorder: MediaRecorder? = null
+    var layoutParams: WindowManager.LayoutParams? = null
+
+
     private fun initRTC(){
 //        iceServers.add(PeerConnection.IceServer("stun:203.217.188.252:3479"))
 //        iceServers.add(PeerConnection.IceServer("turn:203.217.188.252:3478", "truns", "r@h4sia.stun"))
 
         iceServers.add(PeerConnection.IceServer("stun:stun-cjt.kemlu.go.id:5349"))
-        iceServers.add(PeerConnection.IceServer("turn:stun-cjt.kemlu.go.id:5349", "stun", "turn.r4hasi4"))
+//        iceServers.add(PeerConnection.IceServer("turn:stun-cjt.kemlu.go.id:5349", "stun", "turn.r4hasi4"))
 
 //        iceServers.add(PeerConnection.IceServer("turn:203.217.189.66:3478", "turnuser", "Polycom12#\$"))
 
@@ -57,12 +72,49 @@ class GTRTCCLient(val ctx: Context, peerParam: GTPeerConnectionParameters, rtcLi
         this.context = ctx
         this.rtccLient = rtcListener
         this.params = peerParam
-        PeerConnectionFactory.initializeAndroidGlobals(rtcListener, true, true,
-                params!!.videoCodecHwAcceleration, false)
+
+        /*windowManager = context!!.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        surfaceView = SurfaceView(context)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            layoutParams = WindowManager.LayoutParams(
+                WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+//                WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
+                WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
+                PixelFormat.TRANSLUCENT
+            )
+        } else {
+            layoutParams = WindowManager.LayoutParams(
+                WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.TYPE_SYSTEM_ALERT,
+                WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
+                PixelFormat.TRANSLUCENT
+            )
+        }
+
+        layoutParams!!.gravity = Gravity.LEFT or Gravity.TOP
+        windowManager!!.addView(surfaceView, layoutParams)
+        surfaceView!!.holder.addCallback(this)*/
+
+//        var glview_call = GLSurfaceView(context)
+//        glview_call.setPreserveEGLContextOnPause(true)
+//        glview_call.setKeepScreenOn(true)
+//
+//        VideoRendererGui.setView(glview_call){
+//
+//        }
+//
+//        val displaySize = Point()
+//        windowManager!!.defaultDisplay.getSize(displaySize)
+        initRTC()
+//        PeerConnectionFactory.initializeAndroidGlobals(rtccLient, true, true,
+//            params!!.videoCodecHwAcceleration, true)
+//        TODO("Not yet implemented")
+        PeerConnectionFactory.initializeAndroidGlobals(rtccLient, true, true,
+            params!!.videoCodecHwAcceleration, pcConstraints)
         factory = PeerConnectionFactory()
         gson = Gson()
 
-        initRTC()
     }
 
     public fun answerCandidate(candidate: Candidate){
@@ -70,11 +122,15 @@ class GTRTCCLient(val ctx: Context, peerParam: GTPeerConnectionParameters, rtcLi
     }
 
     public fun answerOffer(payload : Payload){
-        remoteSDPCommand.execute(JSONObject().put("sdp", payload.sdp.sdp).put("type", payload.sdp.type))
+        answerCommand.execute(JSONObject().put("sdp", payload.sdp.sdp).put("type", payload.sdp.type))
+    }
+
+    fun offers(){
+        offerCommand.execute(JSONObject())
     }
 
     public fun answerAnswer(payload : Payload){
-        answerCommand.execute(JSONObject().put("sdp", payload.sdp.sdp).put("type", payload.sdp.type))
+        remoteSDPCommand.execute(JSONObject().put("sdp", payload.sdp.sdp).put("type", payload.sdp.type))
     }
 
 
@@ -152,66 +208,48 @@ class GTRTCCLient(val ctx: Context, peerParam: GTPeerConnectionParameters, rtcLi
         }
     }
 
-    public fun initPeer(){
+    fun initPeer(){
         setCamera()
         peer = Peer()
 //        offerCommand.execute(JSONObject())
     }
 
 //    public fun initStream(model: GTCallModel){
-    public fun initStream(){
+    fun initStream(){
         if(peer == null){
             setCamera()
             peer = Peer()
-            peer!!.pc!!.addStream(localMS)
+//            peer!!.pc!!.addStream(localMS)
         }
-
-//    iceCandidateCommand.execute(JSONObject().put("id", "").put("label", "ok").put("candidate", "gson!!.fromJson(model.payload, GTCallModel.Payload::class.java).sdp"))
-
-        /*if(gson!!.fromJson(model.payload, GTCallModel.Payload::class.java).type == 2){
-            remoteSDPCommand.execute(JSONObject().put("sdp", gson!!.fromJson(model.payload, GTCallModel.Payload::class.java).sdp).put("type", model.type))
-        } else {
-            when(model.type){
-                "sdp" -> {
-                    Log.d(TAG, "initStream here answer")
-//                answerCommand.execute(JSONObject().put("sdp", model.payload.sdp).put("type", model.type))
-                    answerCommand.execute(JSONObject().put("sdp", gson!!.fromJson(model.payload, GTCallModel.Payload::class.java).sdp).put("type", "offer"))
-                }
-                "answer" -> {
-                    Log.d(TAG, "initStream here callback answer")
-                    remoteSDPCommand.execute(JSONObject().put("sdp", gson!!.fromJson(model.payload, GTCallModel.Payload::class.java).sdp).put("type", model.type))
-                }
-                "candidate" -> {
-                    Log.d(TAG, "initStream here candidate")
-                    iceCandidateCommand.execute(JSONObject().put("id", gson!!.fromJson(model.payload, GTCallModel.Payload::class.java).sdpMid).put("label", gson!!.fromJson(model.payload, GTCallModel.Payload::class.java).sdpMLineIndex).put("candidate", gson!!.fromJson(model.payload, GTCallModel.Payload::class.java).sdp))
-                }
-            }
-        }*/
     }
 
     private fun setCamera() {
         localMS = factory!!.createLocalMediaStream("ARDAMS")
         Log.d(TAG, "setCamera: " + localMS!!.label())
         if (params!!.videoCallEnabled) {
-            val videoConstraints = MediaConstraints()
-            videoConstraints.mandatory.add(MediaConstraints.KeyValuePair("maxHeight", Integer.toString(params!!.videoHeight)))
-            videoConstraints.mandatory.add(MediaConstraints.KeyValuePair("maxWidth", Integer.toString(params!!.videoWidth)))
-            videoConstraints.mandatory.add(MediaConstraints.KeyValuePair("maxFrameRate", Integer.toString(params!!.videoFps)))
-            videoConstraints.mandatory.add(MediaConstraints.KeyValuePair("minFrameRate", Integer.toString(params!!.videoFps)))
 
-            videoSource = factory!!.createVideoSource(getVideoCapturer(), videoConstraints)
-            localMS!!.addTrack(factory!!.createVideoTrack("ARDAMSv0", videoSource))
         }
 
+        val videoConstraints = MediaConstraints()
+        videoConstraints.mandatory.add(MediaConstraints.KeyValuePair("maxHeight", Integer.toString(params!!.videoHeight)))
+        videoConstraints.mandatory.add(MediaConstraints.KeyValuePair("maxWidth", Integer.toString(params!!.videoWidth)))
+        videoConstraints.mandatory.add(MediaConstraints.KeyValuePair("maxFrameRate", Integer.toString(params!!.videoFps)))
+        videoConstraints.mandatory.add(MediaConstraints.KeyValuePair("minFrameRate", Integer.toString(params!!.videoFps)))
+
+        videoSource = factory!!.createVideoSource(getVideoCapturer(), videoConstraints)
+        localMS!!.addTrack(factory!!.createVideoTrack("ARDAMSv0", videoSource))
         val audioSource = factory!!.createAudioSource(MediaConstraints())
-//        localMS!!.addTrack(factory!!.createAudioTrack("ARDAMSa0", audioSource))
+        localMS!!.addTrack(factory!!.createAudioTrack("ARDAMSa0", audioSource))
 
         rtccLient!!.onLocalStream(localMS!!)
     }
 
     private fun getVideoCapturer(): VideoCapturer {
-        val frontCameraDeviceName = VideoCapturerAndroid.getNameOfFrontFacingDevice()
-        return VideoCapturerAndroid.create(frontCameraDeviceName)
+        //            TODO : here
+//        TODO("Not yet implemented")
+        val frontCameraDeviceName = VideoCapturerAndroid.getNameOfBackFacingDevice()
+        videoCapturer = VideoCapturerAndroid.create(frontCameraDeviceName)
+        return videoCapturer!!
     }
 
 
@@ -270,8 +308,9 @@ class GTRTCCLient(val ctx: Context, peerParam: GTPeerConnectionParameters, rtcLi
 
         override fun onAddStream(mediaStream: MediaStream) {
             Log.d(TAG, "onAddStream " + mediaStream.label())
-            // remote streams are displayed from 1 to MAX_PEER (0 is localStream)
-            rtccLient!!.onAddRemoteStream(mediaStream)
+//            remoteMS = mediaStream
+//            peer!!.pc!!.addStream(remoteMS)
+//            rtccLient!!.onAddRemoteStream(mediaStream)
         }
 
         override fun onRemoveStream(mediaStream: MediaStream) {
@@ -284,6 +323,7 @@ class GTRTCCLient(val ctx: Context, peerParam: GTPeerConnectionParameters, rtcLi
         override fun onRenegotiationNeeded() {
 
         }
+
     }
 
     private fun removePeer() {
@@ -300,5 +340,78 @@ class GTRTCCLient(val ctx: Context, peerParam: GTPeerConnectionParameters, rtcLi
 //            videoSource!!.stop()
             videoSource!!.dispose()
         }
+    }
+
+    override fun surfaceChanged(p0: SurfaceHolder?, p1: Int, p2: Int, p3: Int) {
+
+    }
+
+    override fun surfaceDestroyed(p0: SurfaceHolder?) {
+
+    }
+
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+    override fun surfaceCreated(p0: SurfaceHolder?) {
+        mediaRecorder = MediaRecorder()
+
+        /*try {
+            val manager =
+                getSystemService<Any>(CAMERA_SERVICE) as CameraManager?
+            val cameras = manager!!.cameraIdList
+            val characteristics =
+                manager!!.getCameraCharacteristics(cameras[1])
+            val configs = characteristics.get(
+                CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP
+            )
+            val sizes: Array<out Size>? =
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    configs!!.getOutputSizes(MediaCodec::class.java)
+                } else {
+                    TODO("VERSION.SDK_INT < LOLLIPOP")
+                }
+
+
+            val sizeHigh: Size = sizes!![0]
+            if (ActivityCompat.checkSelfPermission(
+                    context!!,
+                            Manifest.permission.CAMERA
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                // TODO: Consider calling
+                //    ActivityCompat#requestPermissions
+                // here to request the missing permissions, and then overriding
+                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                //                                          int[] grantResults)
+                // to handle the case where the user grants the permission. See the documentation
+                // for ActivityCompat#requestPermissions for more details.
+                return
+            }
+            manager!!.openCamera(cameras[1], object : CameraDevice.StateCallback() {
+                override fun onOpened(camera: CameraDevice) {
+                    mCamera = camera
+                    mediaRecorder!!.setPreviewDisplay(p0!!.getSurface())
+                    mediaRecorder!!.setVideoSource(MediaRecorder.VideoSource.SURFACE)
+                    mediaRecorder!!.setMaxFileSize(0)
+                    mediaRecorder!!.setOrientationHint(0)
+                    try {
+                        mediaRecorder!!.prepare()
+                    } catch (ignored: Exception) {
+
+                    }
+                }
+
+                override fun onDisconnected(camera: CameraDevice) {}
+                override fun onError(camera: CameraDevice, error: Int) {}
+            }, null)
+        } catch (e: CameraAccessException) {
+            e.printStackTrace()
+        }*/
+
+        TODO("Not yet implemented")
+        PeerConnectionFactory.initializeAndroidGlobals(rtccLient, true, true,
+            params!!.videoCodecHwAcceleration, true)
+        factory = PeerConnectionFactory()
+        gson = Gson()
+
     }
 }

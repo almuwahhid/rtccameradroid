@@ -26,7 +26,7 @@ android {
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
+//    implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation 'androidx.appcompat:appcompat:1.1.0'
     implementation 'androidx.core:core-ktx:1.2.0'
@@ -36,6 +36,10 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
     implementation 'com.google.code.gson:gson:2.6.2'
     implementation 'io.pristine:libjingle:9127@aar'
+//    implementation files('libs/audio_device_java.jar')
+//    implementation files('libs/autobanh.jar')
+//    implementation files('libs/base_java.jar')
+//    implementation files('libs/libjgl_peerconnection.jar')
     implementation 'com.squareup.okhttp3:okhttp:3.12.1'
     implementation 'com.squareup.okhttp3:logging-interceptor:3.12.1'
 

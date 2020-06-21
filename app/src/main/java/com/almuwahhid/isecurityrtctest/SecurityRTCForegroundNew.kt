@@ -1,78 +1,57 @@
 package com.almuwahhid.isecurityrtctest
 
+import android.annotation.TargetApi
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
-import android.content.BroadcastReceiver
-import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
-import android.graphics.Point
+import android.media.projection.MediaProjection
 import android.os.Build
-import android.os.Handler
 import android.os.IBinder
+import android.util.DisplayMetrics
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
-import chat.rocket.android.call.GTRTC.GTRTCCLient
-import com.almuwahhid.isecurityrtctest.GTRTC.CallStatic.Companion.AUDIO_CODEC_OPUS
-import com.almuwahhid.isecurityrtctest.GTRTC.CallStatic.Companion.VIDEO_CODEC_VP9
-import com.almuwahhid.isecurityrtctest.GTRTC.GTPeerConnectionParameters
+import com.almuwahhid.isecurityrtctest.GTRTC.PeerConnectionClient
+import com.almuwahhid.isecurityrtctest.GTRTC.WebRtcClient
 import com.google.gson.Gson
 import io.socket.client.Ack
 import io.socket.client.Socket
 import io.socket.emitter.Emitter
 import org.json.JSONException
-import org.json.JSONObject
-import org.webrtc.MediaConstraints
 import org.webrtc.MediaStream
+//import org.webrtc.ScreenCapturerAndroid
 import org.webrtc.VideoCapturer
-import org.webrtc.VideoRenderer
-import java.util.*
 
-class SecurityRTCForeground : Service(), GTRTCCLient.RTCListener {
+class SecurityRTCForegroundNew : Service(), WebRtcClient.RtcListener {
 
     var manager: NotificationManager? = null
-    var rtcClient: GTRTCCLient? = null
+    var rtcClient: WebRtcClient? = null
     var notificationBuilder: NotificationCompat.Builder? = null
     private var mSocket: Socket? = null
-    val REMOTE_X = 0
-    val REMOTE_Y = 0
-    val REMOTE_WIDTH = 100
-    val REMOTE_HEIGHT = 100
-    var filter: IntentFilter? = null
+
+    private var mWebRtcClient: WebRtcClient? = null
+    var sDeviceWidth = 0
+    var sDeviceHeight = 0
+    val SCREEN_RESOLUTION_SCALE = 2
 
     internal var gson: Gson? = null
-
-    private val receiver: BroadcastReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            rtcClient!!.offers()
-        }
-    }
-
 
     override fun onBind(p0: Intent?): IBinder? {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-
-        filter = IntentFilter()
-        filter!!.addAction("offers")
-        registerReceiver(receiver, filter)
-
         gson = Gson()
         val singleton = SocketSingleton.get(applicationContext)
         mSocket = singleton.socket
 
         mSocket!!.on(Socket.EVENT_CONNECT, Emitter.Listener {
             Log.d("TAGSecurityRTCFore", "SOCKET CONNECTED")
-            //                t.schedule(new ClassEmitNotifNews(), 0, 5000);
         })
         mSocket!!.on("callrtc") { args ->
             Log.d("TAGSecurityRTCFore", "emitGetListUser() received listen to room called " + args[0].toString())
-//            Log.d("TAGSecurityRTCFore", "received message called " + args[0].toString())
             try {
 
                 if(args[0].toString().contains("\"candidate\"")){
@@ -99,7 +78,7 @@ class SecurityRTCForeground : Service(), GTRTCCLient.RTCListener {
             Log.d("connect", "connect")
         }
 
-        manager = getSystemService(NotificationManager::class.java)
+//        manager = getSystemService(NotificationManager::class.java)
         val notificationIntent = Intent(this, MainActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(this,
             0, notificationIntent, 0)
@@ -134,23 +113,59 @@ class SecurityRTCForeground : Service(), GTRTCCLient.RTCListener {
             .setContentIntent(pendingIntent)
             .build()
 
-
         startForeground(1201029, notification)
 
+//        val metrics = DisplayMetrics()
+//        getWindowManager().getDefaultDisplay().getRealMetrics(metrics)
+        sDeviceWidth = 100
+        sDeviceHeight = 100
         init()
-        if(rtcClient!=null){
-            rtcClient!!.initPeer()
-        }
-
 
         return START_NOT_STICKY
     }
 
-    private fun init(){
-        val displaySize = Point()
-        val params = GTPeerConnectionParameters(
-            true, false, displaySize.x, displaySize.y, 30, 1, VIDEO_CODEC_VP9, true, 1, AUDIO_CODEC_OPUS, true)
-        rtcClient = GTRTCCLient(this, params!!, this)
+    private fun init() {
+        val peerConnectionParameters = PeerConnectionClient.PeerConnectionParameters(
+            true,
+            false,
+            true,
+            sDeviceWidth / SCREEN_RESOLUTION_SCALE,
+            sDeviceHeight / SCREEN_RESOLUTION_SCALE,
+            0,
+            0,
+            "VP8",
+            false,
+            true,
+            0,
+            "OPUS",
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            null
+        )
+        mWebRtcClient = WebRtcClient(
+            applicationContext,
+            this,
+            createScreenCapturer(),
+            peerConnectionParameters
+        )
+    }
+
+    @TargetApi(21)
+    private fun createScreenCapturer(): VideoCapturer? {
+        /*return ScreenCapturerAndroid(
+            null,
+            object : MediaProjection.Callback() {
+                override fun onStop() {
+//                    report("User revoked permission to capture the screen.")
+                }
+            })*/
+        return null
     }
 
     override fun onCreate() {
@@ -174,7 +189,7 @@ class SecurityRTCForeground : Service(), GTRTCCLient.RTCListener {
         Log.d("iSecurity id", ""+midIndex)
         Log.d("iSecurity label", mid)
         Log.d("iSecurity candidate", candidate)
-        mSocket!!.emit("callrtc", gson!!.toJson(Candidate(Candidate.Detail(candidate, ""+mid, ""+midIndex), "cccf2335-66bf-11e2-ffed-e7f9e438c5b8")),
+        mSocket!!.emit("callrtc", gson!!.toJson(Candidate(Candidate.Detail(candidate, ""+mid, ""+midIndex), "cccf2335-66bf-11e2-ffed-e7f9e438c5b8\"")),
             object : Ack{
                 override fun call(vararg args: Any?) {
                     Log.d("TAGSecurityRTCFore", "call: getDatas " + args.size)
@@ -196,9 +211,6 @@ class SecurityRTCForeground : Service(), GTRTCCLient.RTCListener {
 
     override fun onAddRemoteStream(remoteStream: MediaStream) {
         Log.d("iSecurity remote Stream", "remote Stream ok")
-//        remoteStream.videoTracks[0].addRenderer(VideoRenderer(VideoRendererGui.create(
-//            REMOTE_X, REMOTE_Y,
-//            REMOTE_WIDTH, REMOTE_HEIGHT, VideoRendererGui.ScalingType.SCALE_ASPECT_FILL, false)))
 
 
     }

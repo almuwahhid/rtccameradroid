@@ -9,6 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Point
+import android.opengl.EGLContext
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
@@ -150,7 +151,7 @@ class SecurityRTCForeground : Service(), GTRTCCLient.RTCListener {
         val displaySize = Point()
         val params = GTPeerConnectionParameters(
             true, false, displaySize.x, displaySize.y, 30, 1, VIDEO_CODEC_VP9, true, 1, AUDIO_CODEC_OPUS, true)
-        rtcClient = GTRTCCLient(this, params!!, this)
+        rtcClient = GTRTCCLient(this, params!!, this, null)
     }
 
     override fun onCreate() {

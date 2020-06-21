@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.hardware.camera2.CameraDevice
 import android.media.MediaRecorder
+import android.opengl.EGLContext
 import android.os.Build
 import android.util.Log
 import android.view.SurfaceHolder
@@ -21,8 +22,10 @@ import org.webrtc.*
 import java.util.*
 
 
-class GTRTCCLient(val ctx: Context, peerParam: GTPeerConnectionParameters, rtcListener: RTCListener) :
+class GTRTCCLient(ctx: Context, peerParam: GTPeerConnectionParameters, rtcListener: RTCListener, mEGLcontext: EGLContext?) :
     SurfaceHolder.Callback {
+
+
     private val TAG = ".iSecurityRTCClient"
 
     private val pcConstraints = MediaConstraints()
@@ -106,14 +109,16 @@ class GTRTCCLient(val ctx: Context, peerParam: GTPeerConnectionParameters, rtcLi
 //
 //        val displaySize = Point()
 //        windowManager!!.defaultDisplay.getSize(displaySize)
-        initRTC()
+
 //        PeerConnectionFactory.initializeAndroidGlobals(rtccLient, true, true,
 //            params!!.videoCodecHwAcceleration, true)
-//        TODO("Not yet implemented")
         PeerConnectionFactory.initializeAndroidGlobals(rtccLient, true, true,
-            params!!.videoCodecHwAcceleration, pcConstraints)
+            params!!.videoCodecHwAcceleration, mEGLcontext)
+//        PeerConnectionFactory.initializeAndroidGlobals(rtccLient, true, true,
+//            params!!.videoCodecHwAcceleration, pcConstraints)
         factory = PeerConnectionFactory()
         gson = Gson()
+        initRTC()
 
     }
 

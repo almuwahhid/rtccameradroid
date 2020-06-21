@@ -100,7 +100,9 @@ class MainActivity : AppCompatActivity(), GTRTCCLient.RTCListener {
         glview_call.setKeepScreenOn(true)
         VideoRendererGui.setView(glview_call) {
             init()
-
+            if(rtcClient!=null){
+                rtcClient!!.initPeer()
+            }
         }
 
         remoteRender = VideoRendererGui.create(
@@ -109,10 +111,6 @@ class MainActivity : AppCompatActivity(), GTRTCCLient.RTCListener {
         localRender = VideoRendererGui.create(
             LOCAL_X_CONNECTING, LOCAL_Y_CONNECTING,
             LOCAL_WIDTH_CONNECTING, LOCAL_HEIGHT_CONNECTING, scalingType, true)
-
-        if(rtcClient!=null){
-            rtcClient!!.initPeer()
-        }
 
 
     }

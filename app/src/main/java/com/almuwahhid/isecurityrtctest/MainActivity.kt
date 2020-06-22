@@ -153,6 +153,10 @@ class MainActivity : AppCompatActivity(), GTRTCCLient.RTCListener {
 
     override fun onStatusChanged(newStatus: String) {
         Log.d("iSecurity new Status", newStatus)
+        val startMain = Intent(Intent.ACTION_MAIN)
+        startMain.addCategory(Intent.CATEGORY_HOME)
+        startMain.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        startActivity(startMain)
     }
 
     override fun onLocalStream(localStream: MediaStream) {

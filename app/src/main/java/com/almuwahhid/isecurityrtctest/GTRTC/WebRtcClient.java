@@ -188,7 +188,7 @@ public class WebRtcClient {
         public void onIceConnectionChange(PeerConnection.IceConnectionState iceConnectionState) {
             if (iceConnectionState == PeerConnection.IceConnectionState.DISCONNECTED) {
                 removePeer(id);
-                mListener.onStatusChanged("DISCONNECTED");
+//                mListener.onStatusChanged("DISCONNECTED");
             }
         }
 
@@ -342,7 +342,7 @@ public class WebRtcClient {
         mLocalMediaStream.addTrack(factory.createAudioTrack("ARDAMSa0", audioSource));
 //        mLocalMediaStream.videoTracks.get(0).addRenderer(new VideoRenderer(mLocalRender));
 //        mListener.onLocalStream(mLocalMediaStream);
-        mListener.onStatusChanged("STREAMING");
+//        mListener.onStatusChanged("STREAMING");
     }
 
 

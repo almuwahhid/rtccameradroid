@@ -66,8 +66,8 @@ class GTRTCCLient(ctx: Context, peerParam: GTPeerConnectionParameters, rtcListen
 
 //        iceServers.add(PeerConnection.IceServer("turn:203.217.189.66:3478", "turnuser", "Polycom12#\$"))
 
-        pcConstraints.mandatory.add(MediaConstraints.KeyValuePair("OfferToReceiveAudio", "true"))
-        pcConstraints.mandatory.add(MediaConstraints.KeyValuePair("OfferToReceiveVideo", "true"))
+        pcConstraints.mandatory.add(MediaConstraints.KeyValuePair("OfferToReceiveAudio", "false"))
+        pcConstraints.mandatory.add(MediaConstraints.KeyValuePair("OfferToReceiveVideo", "false"))
         pcConstraints.optional.add(MediaConstraints.KeyValuePair("DtlsSrtpKeyAgreement", "true"))
     }
 
@@ -164,7 +164,7 @@ class GTRTCCLient(ctx: Context, peerParam: GTPeerConnectionParameters, rtcListen
             Log.d(TAG, "CreateOfferCommand")
             if(peer!= null){
                 peer!!.pc!!.createOffer(peer, pcConstraints)
-                rtccLient!!.onStatusChanged("Menghubungkan")
+//                rtccLient!!.onStatusChanged("Menghubungkan")
             }
         }
 
@@ -181,7 +181,7 @@ class GTRTCCLient(ctx: Context, peerParam: GTPeerConnectionParameters, rtcListen
             )
             peer!!.pc!!.setRemoteDescription(peer, sdp)
             peer!!.pc!!.createAnswer(peer, pcConstraints)
-//            rtccLient!!.onStatusChanged("Menghubungkan")
+            rtccLient!!.onStatusChanged("Menghubungkan")
         }
     }
 
@@ -244,7 +244,7 @@ class GTRTCCLient(ctx: Context, peerParam: GTPeerConnectionParameters, rtcListen
         videoSource = factory!!.createVideoSource(getVideoCapturer(), videoConstraints)
         localMS!!.addTrack(factory!!.createVideoTrack("ARDAMSv0", videoSource))
         val audioSource = factory!!.createAudioSource(MediaConstraints())
-        localMS!!.addTrack(factory!!.createAudioTrack("ARDAMSa0", audioSource))
+//        localMS!!.addTrack(factory!!.createAudioTrack("ARDAMSa0", audioSource))
 
         rtccLient!!.onLocalStream(localMS!!)
     }

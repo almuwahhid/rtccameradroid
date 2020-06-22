@@ -9,9 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Point
-import android.opengl.EGLContext
 import android.os.Build
-import android.os.Handler
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -25,12 +23,7 @@ import io.socket.client.Ack
 import io.socket.client.Socket
 import io.socket.emitter.Emitter
 import org.json.JSONException
-import org.json.JSONObject
-import org.webrtc.MediaConstraints
 import org.webrtc.MediaStream
-import org.webrtc.VideoCapturer
-import org.webrtc.VideoRenderer
-import java.util.*
 
 class SecurityRTCForeground : Service(), GTRTCCLient.RTCListener {
 
@@ -188,11 +181,11 @@ class SecurityRTCForeground : Service(), GTRTCCLient.RTCListener {
 
     override fun onStatusChanged(newStatus: String) {
         Log.d("iSecurity new Status", newStatus)
+        sendBroadcast(Intent("iSecurity").putExtra("data", "iSecurity local Stream ok"))
     }
 
     override fun onLocalStream(localStream: MediaStream) {
         Log.d("iSecurity local Stream", "local Stream ok")
-        sendBroadcast(Intent("iSecurity").putExtra("data", "iSecurity local Stream ok"))
     }
 
     override fun onAddRemoteStream(remoteStream: MediaStream) {
